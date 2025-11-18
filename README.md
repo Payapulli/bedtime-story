@@ -1,50 +1,103 @@
-# Hippocratic AI Coding Assignment
-Welcome to the [Hippocratic AI](https://www.hippocraticai.com) coding assignment
+# Bedtime Story Generator
 
-## Instructions
-The attached code is a simple python script skeleton. Your goal is to take any simple bedtime story request and use prompting to tell a story appropriate for ages 5 to 10.
-- Incorporate a LLM judge to improve the quality of the story
-- Provide a block diagram of the system you create that illustrates the flow of the prompts and the interaction between judge, storyteller, user, and any other components you add
-- Do not change the openAI model that is being used. 
-- Please use your own openAI key, but do not include it in your final submission.
-- Otherwise, you may change any code you like or add any files
+A multi-agent AI system that generates age-appropriate bedtime stories for children ages 5-10 using adaptive prompting, LLM-based quality evaluation, and iterative refinement.
 
----
+## Architecture
 
-## Rules
-- This assignment is open-ended
-- You may use any resources you like with the following restrictions
-   - They must be resources that would be available to you if you worked here (so no other humans, no closed AIs, no unlicensed code, etc.)
-   - Allowed resources include but not limited to Stack overflow, random blogs, chatGPT et al
-   - You have to be able to explain how the code works, even if chatGPT wrote it
-- DO NOT PUSH THE API KEY TO GITHUB. OpenAI will automatically delete it
+This system uses a **5-stage pipeline** with multiple specialized agents:
 
----
+```
+User Input → Validation → Generation → Evaluation → Refinement → Final Story
+```
 
-## What does "tell a story" mean?
-It should be appropriate for ages 5-10. Other than that it's up to you. Here are some ideas to help get the brain-juices flowing!
-- Use story arcs to tell better stories
-- Allow the user to provide feedback or request changes
-- Categorize the request and use a tailored generation strategy for each category
+### System Flow
 
----
+1. **Reading Level Diagnostic** ([reading_diagnostic.py](reading_diagnostic.py))
+   - Assesses child's grade level (K-5)
+   - Maps to reading level: beginner, intermediate, or advanced
+   - Adapts vocabulary and sentence complexity
 
-## How will I be evaluated
-Good question. We want to know the following:
-- The efficacy of the system you design to create a good story
-- Are you comfortable using and writing a python script
-- What kinds of prompting strategies and agent design strategies do you use
-- Are the stories your tool creates good?
-- Can you understand and deconstruct a problem
-- Can you operate in an open-ended environment
-- Can you surprise us
+2. **Input Validation** ([validators.py](validators.py))
+   - **Detail Check**: Ensures request has sufficient detail (≥5 words)
+   - **Content Safety**: LLM-based safety filter checks for inappropriate topics
+   - Rejects unsafe content (violence, scary themes, adult content, etc.)
 
----
+3. **Story Generation** ([generator.py](generator.py))
+   - Generates 300-400 word stories adapted to reading level
+   - Uses **category-specific prompting** (adventure, friendship, fantasy, educational, problem-solving, bedtime, animal tales)
+   - Higher temperature (0.8) for creative storytelling
+   - Incorporates reading level requirements into prompt
 
-## Other FAQs
-- How long should I spend on this? 
-No more than 2-3 hours
-- Can I change what the input is? 
-Sure
-- How long should the story be?
-You decide
+4. **LLM Judge Evaluation** ([judge.py](judge.py))
+   - Evaluates story across **8 criteria**:
+     - Age-appropriateness
+     - Language clarity
+     - Story structure
+     - Engagement
+     - Positive message
+     - Dialogue quality
+     - Creativity
+     - Emotional resonance
+   - Returns structured JSON with scores, strengths, and improvements
+   - **Verdict**: PASS (≥7.5/10) or NEEDS_IMPROVEMENT (<7.5/10)
+
+5. **Story Refinement** ([refiner.py](refiner.py))
+   - Triggered if verdict is NEEDS_IMPROVEMENT
+   - Takes judge feedback and refines story
+   - Maintains core plot while addressing specific critiques
+   - Lower temperature (0.6) for controlled improvements
+
+## Setup
+
+### Prerequisites
+- Python 3.7+
+- OpenAI API key
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd bedtime-story
+```
+
+2. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+3. **Set up OpenAI API key**
+
+Create a `.env` file in the project root:
+```bash
+echo "OPENAI_API_KEY=your-api-key-here" > .env
+```
+
+Replace `your-api-key-here` with your actual OpenAI API key.
+
+## Usage
+
+Run the story generator:
+```bash
+python main.py
+```
+
+## Key Features
+
+- **Adaptive Reading Levels**: Automatically adjusts vocabulary and sentence complexity
+- **Content Safety**: LLM-powered safety filter for age-appropriate content
+- **Multi-Agent System**: Specialized components for generation, evaluation, and refinement
+- **Category-Specific Prompting**: Tailored story generation based on request type
+- **Quality Assurance**: 8-criterion evaluation with automatic refinement
+- **Structured Feedback**: Detailed scoring and improvement suggestions
+
+## Technical Details
+
+- **Model**: GPT-3.5-turbo
+- **Temperature Settings**:
+  - Generation: 0.8 (creative)
+  - Refinement: 0.6 (controlled)
+  - Evaluation: 0.2 (consistent)
+  - Safety: 0.1 (strict)
+- **Story Length**: 300-400 words
+- **Age Range**: 5-10 years old
